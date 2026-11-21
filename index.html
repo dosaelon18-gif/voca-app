@@ -16,6 +16,8 @@
       --accent-soft: #eef2ff;
       --danger: #e11d48;
       --danger-soft: #fff1f2;
+      --success: #059669;
+      --success-soft: #ecfdf5;
       --shadow: 0 1px 2px rgba(17, 24, 39, 0.04), 0 8px 24px rgba(17, 24, 39, 0.06);
     }
     @media (prefers-color-scheme: dark) {
@@ -30,6 +32,8 @@
         --accent-soft: #1e1b4b;
         --danger: #fb7185;
         --danger-soft: #2a1218;
+        --success: #34d399;
+        --success-soft: #0b2a20;
         --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.3);
       }
     }
@@ -44,8 +48,9 @@
       -webkit-font-smoothing: antialiased;
     }
     .wrap { max-width: 600px; margin: 0 auto; }
+    [hidden] { display: none !important; }
 
-    header { margin-bottom: 32px; }
+    header { margin-bottom: 24px; }
     .badge {
       display: inline-block;
       font-size: 0.75rem;
@@ -66,6 +71,28 @@
     }
     h1 span { color: var(--accent); }
     .sub { margin: 10px 0 0; color: var(--muted); font-size: 1rem; }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      margin-bottom: 16px;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--muted);
+      background: transparent;
+      border-radius: 10px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: #fff; background: var(--accent); }
 
     .card {
       background: var(--surface);
@@ -96,8 +123,9 @@
       border-color: var(--accent);
       box-shadow: 0 0 0 4px var(--accent-soft);
     }
+    input:disabled { opacity: 0.7; }
     button { font-family: inherit; cursor: pointer; border: none; }
-    .add {
+    .primary {
       flex: 0 0 auto;
       padding: 14px 24px;
       font-size: 1rem;
@@ -107,8 +135,17 @@
       border-radius: 12px;
       transition: background 0.15s, transform 0.1s;
     }
-    .add:hover { background: var(--accent-hover); }
-    .add:active { transform: scale(0.97); }
+    .primary:hover { background: var(--accent-hover); }
+    .primary:active { transform: scale(0.97); }
+    .ghost {
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--muted);
+      background: transparent;
+      border-radius: 10px;
+    }
+    .ghost:hover { color: var(--text); background: var(--bg); }
 
     .head {
       display: flex;
@@ -159,11 +196,79 @@
       animation: none;
     }
 
+    /* Quiz */
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 10px;
+    }
+    .bar {
+      height: 6px;
+      background: var(--bg);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar div {
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+    .q-word {
+      text-align: center;
+      font-size: clamp(2rem, 9vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      padding: 40px 0 32px;
+      overflow-wrap: anywhere;
+    }
+    .q-hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: -24px 0 24px;
+    }
+    .feedback {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+    .feedback.ok { color: var(--success); background: var(--success-soft); }
+    .feedback.no { color: var(--danger); background: var(--danger-soft); }
+    .feedback small { display: block; font-weight: 500; color: var(--text); margin-top: 2px; }
+    .q-actions { display: flex; justify-content: center; margin-top: 10px; }
+
+    .result { text-align: center; padding: 16px 0 8px; }
+    .result .score {
+      font-size: 3.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+    .result .msg { color: var(--muted); margin: 6px 0 24px; }
+    .wrong-title { font-size: 0.95rem; font-weight: 700; margin: 8px 4px 4px; text-align: left; }
+    .quiz-empty { text-align: center; color: var(--muted); padding: 36px 0; }
+
     .saved {
       text-align: center;
       color: var(--muted);
       font-size: 0.85rem;
       margin-top: 20px;
+    }
+    .saved.warn {
+      color: var(--danger);
+      background: var(--danger-soft);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -175,32 +280,75 @@
       <p class="sub">외우고 싶은 단어를 모아 보세요.</p>
     </header>
 
-    <div class="card">
-      <form id="form">
-        <input id="word" placeholder="단어 (예: apple)" autocomplete="off" required>
-        <input id="meaning" placeholder="뜻 (예: 사과)" autocomplete="off" required>
-        <button class="add" type="submit">추가</button>
-      </form>
-    </div>
+    <nav class="tabs">
+      <button class="tab active" data-view="words">단어장</button>
+      <button class="tab" data-view="quiz">퀴즈</button>
+    </nav>
 
-    <div class="card">
-      <div class="head">
-        <h2>단어 목록</h2>
-        <span class="count" id="count"></span>
+    <!-- 단어장 -->
+    <section id="view-words">
+      <div class="card">
+        <form id="form">
+          <input id="word" placeholder="단어 (예: apple)" autocomplete="off" required>
+          <input id="meaning" placeholder="뜻 (예: 사과)" autocomplete="off" required>
+          <button class="primary" type="submit">추가</button>
+        </form>
       </div>
-      <ul id="list"></ul>
-    </div>
+
+      <div class="card">
+        <div class="head">
+          <h2>단어 목록</h2>
+          <span class="count" id="count"></span>
+        </div>
+        <ul id="list"></ul>
+      </div>
+    </section>
+
+    <!-- 퀴즈 -->
+    <section id="view-quiz" hidden>
+      <div class="card" id="quiz-empty" hidden>
+        <p class="quiz-empty">퀴즈를 하려면 단어장에 단어를 먼저 추가해 주세요.</p>
+      </div>
+
+      <div class="card" id="quiz-play" hidden>
+        <div class="progress-row">
+          <span id="q-progress"></span>
+          <span id="q-score"></span>
+        </div>
+        <div class="bar"><div id="q-bar"></div></div>
+
+        <div class="q-word" id="q-word"></div>
+        <p class="q-hint">이 단어의 뜻을 써 보세요</p>
+
+        <form id="q-form">
+          <input id="q-answer" placeholder="뜻 입력" autocomplete="off">
+          <button class="primary" id="q-btn" type="submit">확인</button>
+        </form>
+        <div class="feedback" id="q-feedback" hidden></div>
+        <div class="q-actions">
+          <button class="ghost" id="q-skip" type="button">모르겠어요</button>
+        </div>
+      </div>
+
+      <div class="card" id="quiz-result" hidden>
+        <div class="result">
+          <div class="score" id="r-score"></div>
+          <p class="msg" id="r-msg"></p>
+          <button class="primary" id="r-again" type="button">다시 하기</button>
+        </div>
+        <div id="r-wrong-wrap" hidden>
+          <p class="wrong-title">틀린 단어</p>
+          <ul id="r-wrong"></ul>
+        </div>
+      </div>
+    </section>
 
     <p class="saved">단어는 이 브라우저에 자동으로 저장돼요.</p>
   </div>
 
   <script>
     const KEY = "voca-words";
-    const form = document.getElementById("form");
-    const wordInput = document.getElementById("word");
-    const meaningInput = document.getElementById("meaning");
-    const list = document.getElementById("list");
-    const count = document.getElementById("count");
+    const $ = (id) => document.getElementById(id);
 
     function load() {
       try {
@@ -217,7 +365,57 @@
       } catch (e) {}
     }
 
+    // 저장이 막힌 환경(미리보기 창, 일부 비공개 모드)이면 알려주기
+    function canSave() {
+      try {
+        localStorage.setItem("voca-test", "1");
+        localStorage.removeItem("voca-test");
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+    if (!canSave()) {
+      const note = document.querySelector(".saved");
+      note.textContent = "⚠️ 지금 이 화면에서는 단어가 저장되지 않아요. 새로고침하면 사라져요. 일반 브라우저에서 열어 주세요.";
+      note.classList.add("warn");
+    }
+
     let words = load();
+
+    // ---------- 단어장 ----------
+    const form = $("form");
+    const wordInput = $("word");
+    const meaningInput = $("meaning");
+    const list = $("list");
+    const count = $("count");
+
+    function wordItem(item, withDelete) {
+      const li = document.createElement("li");
+      const text = document.createElement("div");
+      text.className = "text";
+      const w = document.createElement("div");
+      w.className = "word";
+      w.textContent = item.word;
+      const m = document.createElement("div");
+      m.className = "meaning";
+      m.textContent = item.meaning;
+      text.append(w, m);
+      li.append(text);
+
+      if (withDelete) {
+        const del = document.createElement("button");
+        del.className = "del";
+        del.textContent = "삭제";
+        del.addEventListener("click", () => {
+          words = words.filter((x) => x.id !== item.id);
+          save();
+          render();
+        });
+        li.append(del);
+      }
+      return li;
+    }
 
     function render() {
       list.innerHTML = "";
@@ -229,30 +427,7 @@
         list.appendChild(li);
         return;
       }
-      words.forEach((item) => {
-        const li = document.createElement("li");
-        const text = document.createElement("div");
-        text.className = "text";
-        const w = document.createElement("div");
-        w.className = "word";
-        w.textContent = item.word;
-        const m = document.createElement("div");
-        m.className = "meaning";
-        m.textContent = item.meaning;
-        text.append(w, m);
-
-        const del = document.createElement("button");
-        del.className = "del";
-        del.textContent = "삭제";
-        del.addEventListener("click", () => {
-          words = words.filter((x) => x.id !== item.id);
-          save();
-          render();
-        });
-
-        li.append(text, del);
-        list.appendChild(li);
-      });
+      words.forEach((item) => list.appendChild(wordItem(item, true)));
     }
 
     form.addEventListener("submit", (e) => {
@@ -266,6 +441,143 @@
       form.reset();
       wordInput.focus();
     });
+
+    // ---------- 탭 ----------
+    document.querySelectorAll(".tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t === tab));
+        const view = tab.dataset.view;
+        $("view-words").hidden = view !== "words";
+        $("view-quiz").hidden = view !== "quiz";
+        if (view === "quiz") startQuiz();
+      });
+    });
+
+    // ---------- 퀴즈 ----------
+    let quiz = [];
+    let index = 0;
+    let score = 0;
+    let wrong = [];
+    let answered = false;
+
+    // 띄어쓰기, 문장부호, 대소문자를 무시하고 비교
+    const normalize = (s) => s.toLowerCase().replace(/[\s.,!?~'"()\-]/g, "");
+    const splitParts = (s) => s.split(/[,/;·]/).map(normalize).filter(Boolean);
+
+    function isCorrect(answer, meaning) {
+      const correct = [normalize(meaning), ...splitParts(meaning)];
+      const given = [normalize(answer), ...splitParts(answer)].filter(Boolean);
+      return given.some((g) => correct.includes(g));
+    }
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function startQuiz() {
+      $("quiz-result").hidden = true;
+      if (words.length === 0) {
+        $("quiz-empty").hidden = false;
+        $("quiz-play").hidden = true;
+        return;
+      }
+      $("quiz-empty").hidden = true;
+      $("quiz-play").hidden = false;
+      quiz = shuffle(words);
+      index = 0;
+      score = 0;
+      wrong = [];
+      showQuestion();
+    }
+
+    function showQuestion() {
+      const item = quiz[index];
+      answered = false;
+      $("q-word").textContent = item.word;
+      $("q-progress").textContent = `${index + 1} / ${quiz.length}`;
+      $("q-score").textContent = `맞힌 개수 ${score}`;
+      $("q-bar").style.width = (index / quiz.length) * 100 + "%";
+      $("q-answer").value = "";
+      $("q-answer").disabled = false;
+      $("q-btn").textContent = "확인";
+      $("q-skip").hidden = false;
+      $("q-feedback").hidden = true;
+      $("q-answer").focus();
+    }
+
+    function check(answer) {
+      const item = quiz[index];
+      const ok = answer !== null && isCorrect(answer, item.meaning);
+      answered = true;
+      if (ok) {
+        score++;
+      } else {
+        wrong.push(item);
+      }
+      const fb = $("q-feedback");
+      fb.hidden = false;
+      fb.className = "feedback " + (ok ? "ok" : "no");
+      fb.textContent = ok ? "정답이에요!" : "아쉬워요!";
+      const detail = document.createElement("small");
+      detail.textContent = "뜻: " + item.meaning;
+      fb.appendChild(detail);
+
+      $("q-score").textContent = `맞힌 개수 ${score}`;
+      $("q-bar").style.width = ((index + 1) / quiz.length) * 100 + "%";
+      $("q-answer").disabled = true;
+      $("q-skip").hidden = true;
+      $("q-btn").textContent = index + 1 < quiz.length ? "다음" : "결과 보기";
+      $("q-btn").focus();
+    }
+
+    function next() {
+      index++;
+      if (index < quiz.length) {
+        showQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    function showResult() {
+      $("quiz-play").hidden = true;
+      $("quiz-result").hidden = false;
+      $("r-score").textContent = `${score} / ${quiz.length}`;
+      const rate = score / quiz.length;
+      $("r-msg").textContent =
+        rate === 1 ? "완벽해요! 모두 맞혔어요 🎉" :
+        rate >= 0.7 ? "잘했어요! 조금만 더 하면 완벽해요." :
+        "틀린 단어를 다시 보고 한 번 더 도전해 봐요.";
+      const ul = $("r-wrong");
+      ul.innerHTML = "";
+      wrong.forEach((item) => ul.appendChild(wordItem(item, false)));
+      $("r-wrong-wrap").hidden = wrong.length === 0;
+    }
+
+    $("q-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (answered) {
+        next();
+        return;
+      }
+      const answer = $("q-answer").value.trim();
+      if (!answer) {
+        $("q-answer").focus();
+        return;
+      }
+      check(answer);
+    });
+
+    $("q-skip").addEventListener("click", () => {
+      if (!answered) check(null);
+    });
+
+    $("r-again").addEventListener("click", startQuiz);
 
     render();
   </script>
