@@ -188,6 +188,24 @@
       transition: color 0.15s, background 0.15s;
     }
     .del:hover { color: var(--danger); background: var(--danger-soft); }
+    .speak {
+      flex: 0 0 auto;
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-radius: 50%;
+      transition: transform 0.1s, background 0.15s;
+    }
+    .speak:hover { background: var(--accent); color: #fff; }
+    .speak:active { transform: scale(0.92); }
+    .speak svg { width: 18px; height: 18px; }
+    .speak.big { width: 48px; height: 48px; }
+    .speak.big svg { width: 22px; height: 22px; }
+    .no-speech .speak { display: none !important; }
     li.empty {
       display: block;
       text-align: center;
@@ -219,12 +237,19 @@
       border-radius: 999px;
       transition: width 0.3s ease;
     }
+    .q-word-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 40px 0 32px;
+    }
     .q-word {
+      min-width: 0;
       text-align: center;
       font-size: clamp(2rem, 9vw, 3rem);
       font-weight: 800;
       letter-spacing: -0.02em;
-      padding: 40px 0 32px;
       overflow-wrap: anywhere;
     }
     .q-hint {
@@ -317,7 +342,10 @@
         </div>
         <div class="bar"><div id="q-bar"></div></div>
 
-        <div class="q-word" id="q-word"></div>
+        <div class="q-word-row">
+          <div class="q-word" id="q-word"></div>
+          <button class="speak big" id="q-speak" type="button" aria-label="발음 듣기" title="발음 듣기"></button>
+        </div>
         <p class="q-hint">이 단어의 뜻을 써 보세요</p>
 
         <form id="q-form">
@@ -383,6 +411,43 @@
 
     let words = load();
 
+    // ---------- 발음 ----------
+    const SPEAKER_ICON =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>';
+    const canSpeak = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+    if (!canSpeak) document.body.classList.add("no-speech");
+
+    // 글자를 보고 언어 고르기 (기본은 영어)
+    function langOf(text) {
+      if (/[가-힣]/.test(text)) return "ko-KR";
+      if (/[ぁ-んァ-ン]/.test(text)) return "ja-JP";
+      if (/[一-龥]/.test(text)) return "zh-CN";
+      return "en-US";
+    }
+
+    function speak(text) {
+      if (!canSpeak) return;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = langOf(text);
+      const voice = speechSynthesis.getVoices().find((v) => v.lang.replace("_", "-").startsWith(u.lang));
+      if (voice) u.voice = voice;
+      u.rate = 0.9;
+      speechSynthesis.speak(u);
+    }
+
+    function speakButton(getText, big) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "speak" + (big ? " big" : "");
+      b.title = "발음 듣기";
+      b.setAttribute("aria-label", "발음 듣기");
+      b.innerHTML = SPEAKER_ICON;
+      b.addEventListener("click", () => speak(getText()));
+      return b;
+    }
+
     // ---------- 단어장 ----------
     const form = $("form");
     const wordInput = $("word");
@@ -401,7 +466,7 @@
       m.className = "meaning";
       m.textContent = item.meaning;
       text.append(w, m);
-      li.append(text);
+      li.append(text, speakButton(() => item.word));
 
       if (withDelete) {
         const del = document.createElement("button");
@@ -578,6 +643,9 @@
     });
 
     $("r-again").addEventListener("click", startQuiz);
+
+    $("q-speak").innerHTML = SPEAKER_ICON;
+    $("q-speak").addEventListener("click", () => speak($("q-word").textContent));
 
     render();
   </script>
